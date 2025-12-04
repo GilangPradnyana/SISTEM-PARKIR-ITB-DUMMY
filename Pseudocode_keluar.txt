@@ -1,0 +1,66 @@
+ALGORITMA Parkir_Keluar
+DEKLARASI
+    input_scan      : STRING
+    data_parkir     : RECORD
+    waktu_sekarang  : DATETIME
+    durasi_parkir   : INTEGER (dalam jam)
+    jenis_kendaraan : STRING
+    tarif_total     : INTEGER
+    metode_bayar    : STRING
+    saldo           : INTEGER
+
+DESKRIPSI
+    MULAI
+
+    // 1. Input di Pos Keluar
+    BACA scan_input (Kamera Plat ATAU Tap Kartu)
+
+    // 2. Pengambilan Data Masuk
+    IF (input_scan ADALAH Plat_Nomor) THEN
+        AMBIL data_parkir DARI Server BERDASARKAN Plat_Nomor
+    ELSE IF (input_scan ADALAH Kartu_EMoney) THEN
+        AMBIL data_parkir DARI Server BERDASARKAN ID_Kartu
+    ENDIF
+
+    // 3. Perhitungan Durasi
+    waktu_sekarang = AMBIL_WAKTU_SAAT_INI()
+    durasi_parkir = waktu_sekarang - data_parkir.waktu_masuk
+
+    // 4. Perhitungan Tarif (Abstraksi Data)
+    jenis_kendaraan = data_parkir.jenis_kendaraan
+
+    IF (jenis_kendaraan = "Mobil") THEN
+        tarif_total = HITUNG_TARIF_MOBIL(durasi_parkir)
+    ELSE IF (jenis_kendaraan = "Motor") THEN
+        tarif_total = HITUNG_TARIF_MOTOR(durasi_parkir)
+    ENDIF
+
+    TAMPILKAN "Total Biaya: " + tarif_total
+
+    // 5. Proses Pembayaran
+    BACA pilihan_metode_pembayaran
+
+    CASE pilihan_metode_pembayaran OF
+        "Saldo Mahasiswa":
+            // Logika potong saldo cloud/server
+            AMBIL saldo_mahasiswa DARI Database
+            IF (saldo_mahasiswa >= tarif_total) THEN
+                KURANGI saldo_mahasiswa SEBESAR tarif_total
+                UPDATE Database
+                PANGGIL fungsi Buka_Gerbang_Keluar()
+            ELSE
+                TAMPILKAN "Saldo Kurang, Gunakan E-Money"
+            ENDIF
+
+        "E-Money":
+            // Logika potong saldo kartu fisik
+            BACA saldo_kartu
+            IF (saldo_kartu >= tarif_total) THEN
+                KURANGI saldo_kartu SEBESAR tarif_total
+                PANGGIL fungsi Buka_Gerbang_Keluar()
+            ELSE
+                TAMPILKAN "Saldo Kartu Tidak Cukup"
+            ENDIF
+    ENDCASE
+
+    SELESAI

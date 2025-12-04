@@ -1,0 +1,52 @@
+ALGORITMA Parkir_Masuk
+DEKLARASI
+    status_kamera   : BOOLEAN
+    plat_nomor      : STRING
+    data_mahasiswa  : RECORD
+    status_tap      : BOOLEAN
+    id_kartu        : STRING
+
+DESKRIPSI
+    MULAI
+
+    // 1. Input Kedatangan
+    BACA sensor_deteksi_kendaraan
+    
+    // 2. Proses Deteksi Kamera
+    LAKUKAN scan_plat_nomor
+    
+    IF (plat_nomor TERBACA) THEN
+        // Cek ke Database Kampus
+        CARI plat_nomor DI Database_Server
+        
+        IF (plat_nomor ADA DAN status_aktif = TRUE) THEN
+            // Jalur Otomatis Sukses
+            SIMPAN waktu_masuk, plat_nomor KE Database
+            PANGGIL fungsi Buka_Palang_Otomatis()
+            MENUJU SELESAI
+        ELSE
+            // Plat terbaca tapi tidak terdaftar -> Pindah ke Manual
+            TAMPILKAN "Akses Ditolak / Tidak Terdaftar"
+            TAMPILKAN "Silakan Tempel Kartu E-Money"
+        ENDIF
+    ELSE
+        // Plat kotor atau tidak terbaca -> Pindah ke Manual
+        TAMPILKAN "Plat Tidak Terbaca"
+        TAMPILKAN "Silakan Tempel Kartu E-Money"
+    ENDIF
+
+    // 3. Proses Manual (Fallback)
+    // Dieksekusi jika deteksi plat gagal atau data tidak ditemukan
+    BACA input_tap_kartu
+    
+    IF (tap_kartu BERHASIL) THEN
+        AMBIL id_kartu
+        SIMPAN waktu_masuk, id_kartu KE Database
+        PANGGIL fungsi Buka_Palang_Otomatis()
+    ELSE
+        // Jika tap kartu gagal atau error
+        TAMPILKAN "Error - Silakan Hubungi Petugas"
+        PANGGIL fungsi Panggil_Petugas()
+    ENDIF
+
+    SELESAI
